@@ -289,6 +289,59 @@ all.dat <- all.dat |>
 # year range
 range(all.dat$year)
 
+################################################################################
+# read in list of chytrid impacted frogs from Scheele 2017
+imp <- read.csv("./data/Scheele et al 2017 chytrid impacted frogs.csv") |>
+  mutate(species = paste(genus, spp),
+         decline = "yes") |>
+  dplyr::select(species, decline) |>
+  unique() |>
+  arrange(species)
+
+# merge with infection data
+all.dat <- left_join(all.dat, imp)
+all.dat$decline[is.na(all.dat$decline)] <- "no"
+glimpse(all.dat)
+
+################################################################################
+# read in gridded temperature data created using "Download silo temperature data.R"
+# read in gridded mean annual temperature data
+# this file is not included in the data (too large) but needs to generated to run this
+all.temp <- rast("./data/gridded_mean_annual_temp_1889_2021.tif")
+all.temp
+names(all.temp)
+
+# subset to study years
+study.years <- paste0("yr_", min(all.dat$year):max(all.dat$year))
+mat <- all.temp[[which(names(all.temp) %in% study.years)]]
+
+# overall mean annual temperature for the study period
+mean.mat <- mean(mat)
+
+# variation in mean annual temperature at a location
+diff <- max(mat) - min(mat)
+diff.val <- terra::extract(diff, cbind(all.dat$long, all.dat$lat))[, 1]
+range(diff.val, na.rm = T)
+
+#-------------------------------------------------------------------------------
+# overall mean temperature data for chytrid locations
+all.dat$temp.overall <- terra::extract(mean.mat, cbind(all.dat$long, all.dat$lat))[, 1]
+glimpse(all.dat)
+
+# temperature data specific to each year
+# number years
+n.year <- all.dat$year - 1977
+
+all.dat$temp.year <- NA
+for(i in 1:nrow(all.dat)) {
+  all.dat$temp.year[i] <- terra::extract(mat[[n.year[i]]], cbind(all.dat$long[i], all.dat$lat[i]))[, 1]
+}
+glimpse(all.dat)
+
+# plot spatial versus inter-annual temperature variation
+par(mfrow = c(1, 1))
+plot(all.dat$temp.year ~ all.dat$temp.overall)
+
 #-------------------------------------------------------------------------------
 # output file
 write.csv(all.dat, "./data/Tidy Bd prevalence data.csv", row.names = F)

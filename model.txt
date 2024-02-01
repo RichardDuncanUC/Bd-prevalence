@@ -1,0 +1,48 @@
+model {
+  for(i in 1:N) {
+    # likelihood for prevalence
+    y[i] ~ dbin(p[i], n.ind[i])                                                   # eq 1
+    logit(p[i]) <- int + b.temp[spp[i]]*temp[i] + b.year.trend*year[i] +
+                   b.year[fac.year[i]] + b.spp[spp[i]] + b.loc[loc[i]] + b.od[i]  # eq 2
+    
+    # overdispersion
+    b.od[i] ~ dnorm(0, tau.od)                                                    # eq 8
+  }
+
+  for(i in 1:N.spp) {
+    mtemp[i] ~ dnorm(0, 0.01)
+    b.spp[i] ~ dnorm(0, tau.spp)                                                  # eq 3
+    b.temp[i] ~ dnorm(mu.temp[i], tau.temp)                                       # eq 4
+    mu.temp[i] <- int.temp + slope.temp * mtemp[i]                                # eq 5
+  }
+
+  for(i in 1:N.loc) {
+    b.loc[i] ~ dnorm(0, tau.loc)                                                  # eq 6
+  }
+  
+  for(i in 1:N.year) {
+    b.year[i] ~ dnorm(0, tau.year)                                                # eq 7
+  }
+
+  # priors
+  int ~ dnorm(0, 0.01)
+  int.temp ~ dnorm(0, 0.01)
+  slope.temp ~ dnorm(0, 0.01)
+  b.year.trend ~ dnorm(0, 0.01)
+
+  tau.spp <- 1/(sigma.spp * sigma.spp)
+  sigma.spp ~ dunif(0, 10)
+
+  tau.loc <- 1/(sigma.loc * sigma.loc)
+  sigma.loc ~ dunif(0, 10)
+  
+  tau.year <- 1 / (sigma.year * sigma.year)
+  sigma.year ~ dunif(0, 10)
+
+  tau.od <- 1 / (sigma.od * sigma.od)
+  sigma.od ~ dunif(0, 10)
+
+  tau.temp <- 1 / (sigma.temp * sigma.temp)
+  sigma.temp ~ dunif(0, 10)
+
+}
