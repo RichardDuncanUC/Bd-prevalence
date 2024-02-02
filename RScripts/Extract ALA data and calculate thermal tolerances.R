@@ -86,11 +86,7 @@ table(dat$species)
 #-------------------------------------------------------------------------------
 # read in gridded mean annual temperature data
 # the tif file was created by running "Download silo data temperature.R"
-<<<<<<< HEAD
 # it is not in the data folder, so needs to be generated
-=======
->>>>>>> c55b4b97e92da43fb826b18014725631fc52a3a0
-
 all.temp <- rast("./data/gridded_mean_annual_temp_1889_2021.tif")
 all.temp
 names(all.temp)
